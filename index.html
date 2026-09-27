@@ -1,0 +1,1254 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Regalia Tuition Center — Multiplication Tables</title>
+<style>
+  :root {
+    --bg:#f5f7fb; --panel:#ffffff; --text:#172033; --muted:#657089;
+    --accent:#4f46e5; --accent2:#eef2ff; --border:#dce1ea;
+    --good:#16a34a; --bad:#dc2626; --gold:#f59e0b;
+  }
+  * { box-sizing:border-box; }
+  html { min-width:0; }
+  body {
+    margin:0; min-width:0; font-family:Inter,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;
+    background:var(--bg); color:var(--text); -webkit-text-size-adjust:100%;
+  }
+  button,select { font:inherit; }
+  button { cursor:pointer; border:1px solid var(--border); background:white; color:var(--text);
+    border-radius:14px; min-height:48px; font-weight:750; touch-action:manipulation;
+    -webkit-tap-highlight-color:transparent; }
+  button:focus-visible,select:focus-visible { outline:3px solid #a5b4fc; outline-offset:2px; }
+  .app { width:min(100%, 900px); margin:0 auto; padding:clamp(16px,4vw,30px) clamp(12px,4vw,22px) 40px; }
+  h1,h2,h3,p { margin-top:0; }
+  .brand { font-size:14px; font-weight:900; letter-spacing:.08em; color:#35503c; margin-bottom:8px; }
+  h1 { font-size:clamp(30px,6vw,42px); line-height:1.05; margin-bottom:8px; }
+  .subtitle { color:var(--muted); margin-bottom:clamp(18px,4vw,26px); line-height:1.45; }
+  .card { background:var(--panel); border:1px solid var(--border); border-radius:clamp(16px,3vw,22px); padding:clamp(16px,3.5vw,26px); }
+  .sound-row { display:flex; justify-content:flex-end; margin-bottom:10px; }
+  .sound-btn { min-height:42px; padding:8px 13px; font-size:14px; background:#f8fafc; }
+  .sound-btn.off { opacity:.6; }
+  .section { margin-bottom:clamp(18px,4vw,24px); }
+  label { display:block; font-weight:800; margin-bottom:9px; }
+  .table-grid { display:grid; grid-template-columns:repeat(6,minmax(0,1fr)); gap:9px; }
+  .table-btn { min-height:52px; font-size:17px; }
+  .table-btn.selected,#mixedBtn.selected,.mode-btn.selected { background:var(--accent2); border-color:var(--accent); color:var(--accent); box-shadow:inset 0 0 0 2px var(--accent2), 0 0 0 2px rgba(79,70,229,.12); }
+  #mixedBtn { width:100%; margin-top:10px; min-height:52px; }
+  .controls { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:14px; }
+  select { width:100%; min-width:0; padding:13px 12px; border:1px solid var(--border); border-radius:13px;
+    background:white; color:var(--text); }
+  .primary { width:100%; border:0; background:#35503c; color:white; padding:15px; font-size:17px; min-height:52px; }
+  .secondary { padding:12px 18px; }
+  .note { color:var(--muted); font-size:13px; margin-top:9px; line-height:1.45; }
+  .hidden { display:none !important; }
+  .regalia-footer { text-align:center; color:var(--muted); font-size:12px; line-height:1.6; padding:28px 10px 4px; }
+  .regalia-footer strong { color:var(--text); font-size:13px; }
+
+  /* Quiz layout is designed around thumb-friendly portrait use. */
+  .quiz-top { display:flex; justify-content:space-between; align-items:center; gap:12px; margin-bottom:9px; }
+  .progress { color:var(--muted); font-size:14px; font-weight:800; }
+  .timer {
+    font-weight:950;
+    font-size:clamp(24px,6vw,36px);
+    white-space:nowrap;
+    min-width:108px;
+    text-align:center;
+    font-variant-numeric:tabular-nums;
+    letter-spacing:.03em;
+  }
+  @keyframes timerPulse {
+    0%,100% { transform:scale(1); }
+    50% { transform:scale(1.08); }
+  }
+  .timer.warning { color:var(--bad); animation:timerPulse .8s ease-in-out infinite; }
+  .bar { height:9px; background:#e9edf4; border-radius:99px; overflow:hidden; margin:10px 0 18px; }
+  .bar > div { height:100%; background:#35503c; width:0%; transition:width .2s; }
+  .question-card { text-align:center; padding:clamp(20px,5vw,36px) clamp(12px,4vw,28px); }
+  .level { color:var(--muted); font-size:12px; font-weight:850; text-transform:uppercase; letter-spacing:.08em; }
+  .question { font-size:clamp(48px,12vw,82px); line-height:1.05; font-weight:950; margin:12px 0 clamp(24px,5vw,34px); }
+  .choices { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:12px; width:min(100%,560px); margin:auto; }
+  .choice { font-size:clamp(24px,6vw,28px); min-height:clamp(76px,15vw,92px); border:2px solid var(--border); transition:.12s; }
+  .choice:hover { border-color:var(--accent); transform:translateY(-1px); }
+  .choice:active { transform:scale(.98); }
+  .choice.correct { background:#ecfdf3; border-color:var(--good); color:#166534; }
+  .choice.wrong { background:#fef2f2; border-color:var(--bad); color:#991b1b; }
+  .feedback { min-height:58px; margin:16px 0 4px; font-size:clamp(16px,4vw,19px); font-weight:850; line-height:1.35; }
+  .feedback.good { color:var(--good); }
+  .feedback.bad { color:#b45309; }
+  .next { width:min(100%,560px); margin:auto; min-height:54px; }
+  .results-title { text-align:center; }
+  .stats { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:9px; margin:20px 0; }
+  .stat { border:1px solid var(--border); border-radius:14px; padding:13px 8px; text-align:center; }
+  .stat strong { display:block; font-size:clamp(22px,6vw,29px); }
+  .stat span { color:var(--muted); font-size:11px; }
+  .missed { border-top:1px solid var(--border); padding-top:18px; }
+  .facts { display:flex; flex-wrap:wrap; gap:8px; margin:12px 0 20px; }
+  .fact { padding:9px 11px; border-radius:9px; background:#fff7ed; border:1px solid #fed7aa; font-weight:750; }
+  .actions { display:grid; grid-template-columns:1fr 1fr; gap:10px; }
+  .actions button { min-height:52px; }
+  #confettiCanvas { position:fixed; inset:0; width:100%; height:100%; pointer-events:none; z-index:9999; }
+
+  /* Small screens: portrait-first, with larger touch targets and simpler scanning. */
+  @media (max-width:600px) {
+    .app { padding-top:16px; }
+    h1 { font-size:31px; }
+    .table-grid { grid-template-columns:repeat(4,minmax(0,1fr)); gap:8px; }
+    .table-btn { min-height:50px; }
+    .controls { grid-template-columns:1fr; gap:16px; }
+    .card { padding:16px; }
+    .question-card { padding:22px 12px 18px; }
+    .quiz-top { align-items:flex-start; }
+    .quiz-top .note { max-width:210px; }
+    .choices { gap:10px; }
+    .choice { min-height:82px; }
+    .actions { grid-template-columns:1fr; }
+  }
+
+  @media (max-width:380px) {
+    .app { padding-left:10px; padding-right:10px; }
+    .card { padding:14px; }
+    .table-grid { grid-template-columns:repeat(3,minmax(0,1fr)); }
+    .table-btn { min-height:48px; }
+    .question { font-size:46px; margin-bottom:22px; }
+    .choices { gap:8px; }
+    .choice { min-height:76px; font-size:23px; }
+  }
+
+  .timeup-overlay {
+    position:fixed;
+    inset:0;
+    z-index:9999;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    background:rgba(255,255,255,.28);
+    backdrop-filter:blur(8px);
+    -webkit-backdrop-filter:blur(8px);
+    pointer-events:none;
+  }
+  .timeup-message {
+    color:#dc2626;
+    font-size:clamp(30px,8vw,72px);
+    font-weight:950;
+    text-align:center;
+    letter-spacing:.02em;
+    text-shadow:0 2px 8px rgba(0,0,0,.12);
+    opacity:0;
+    transform:scale(.94);
+  }
+  .timeup-message.flash {
+    animation:timeupFlash .55s ease-in-out;
+  }
+  @keyframes timeupFlash {
+    0% { opacity:0; transform:scale(.94); }
+    18% { opacity:1; transform:scale(1); }
+    72% { opacity:1; transform:scale(1); }
+    100% { opacity:0; transform:scale(1.02); }
+  }
+
+
+  #passwordGate{position:fixed;inset:0;z-index:10000;display:flex;align-items:center;justify-content:center;padding:20px;background:var(--bg,#f7f8f5)}
+  #passwordGate.hidden{display:none}
+  .password-card{width:min(380px,100%);padding:30px 24px;border-radius:18px;background:#fff;box-shadow:0 12px 40px rgba(0,0,0,.12);text-align:center}
+  .password-card h2{margin:0 0 8px;color:#35503c}
+  .password-card p{margin:0 0 18px;color:var(--muted,#66706a);font-size:14px}
+  #accessPassword{width:100%;box-sizing:border-box;padding:13px 14px;border:1px solid #d8ddd9;border-radius:10px;font:inherit;outline:none}
+  #accessPassword:focus{border-color:#35503c}
+  #passwordSubmit{width:100%;margin-top:12px;padding:13px 16px;border:0;border-radius:10px;background:#35503c;color:#fff;font:inherit;font-weight:800;cursor:pointer}
+  #passwordError{min-height:18px;margin-top:10px;color:#dc2626;font-size:13px;font-weight:700}
+  .students-only{margin:-8px 0 18px;color:var(--muted,#66706a);font-size:13px;font-weight:700}
+
+
+
+  /* =========================================================
+     MULTIPLY RUSH — VISUAL POLISH PASS ONLY
+     No gameplay, timing, scoring, selection or interaction logic changed.
+     ========================================================= */
+  :root {
+    --bg:#f7f5ef;
+    --panel:#ffffff;
+    --text:#17231c;
+    --muted:#68736c;
+    --accent:#35503c;
+    --accent2:#e3ece5;
+    --border:#dce3dd;
+    --good:#238653;
+    --bad:#e0523f;
+    --gold:#f4c95d;
+    --shadow:0 10px 30px rgba(23,35,28,.07);
+    --shadow-strong:0 14px 34px rgba(23,35,28,.12);
+  }
+
+  body {
+    background:
+      radial-gradient(circle at 8% 5%, rgba(53,80,60,.055), transparent 24%),
+      radial-gradient(circle at 92% 18%, rgba(244,201,93,.055), transparent 22%),
+      linear-gradient(180deg,#faf9f5 0%,#f4f3ed 100%);
+    color:var(--text);
+  }
+
+  .app { max-width:920px; }
+
+  .brand {
+    font-size:12px;
+    letter-spacing:.14em;
+    color:var(--accent);
+    margin-bottom:10px;
+  }
+
+  h1 {
+    font-family:"Arial Black",Inter,system-ui,sans-serif;
+    font-weight:950;
+    letter-spacing:-.035em;
+  }
+
+  .subtitle { color:#6b756e; }
+
+  .card {
+    border:1px solid rgba(53,80,60,.10);
+    box-shadow:var(--shadow);
+    background:rgba(255,255,255,.96);
+  }
+
+  .sound-btn {
+    background:#f4f6f2;
+    border-color:#dfe6e0;
+    transition:transform .14s ease,box-shadow .14s ease,border-color .14s ease;
+  }
+  .sound-btn:hover { transform:translateY(-1px); border-color:#c7d3ca; box-shadow:0 5px 14px rgba(23,35,28,.07); }
+  .sound-btn:active { transform:translateY(1px); }
+
+  label { letter-spacing:.01em; }
+
+  .table-grid { gap:10px; }
+
+  .table-btn,
+  #mixedBtn,
+  .mode-btn {
+    background:#fbfcfa;
+    border-color:#dbe3dc;
+    box-shadow:0 3px 0 rgba(53,80,60,.08);
+    transition:transform .14s ease,box-shadow .14s ease,border-color .14s ease,background .14s ease;
+  }
+  .table-btn:hover,
+  #mixedBtn:hover,
+  .mode-btn:hover {
+    transform:translateY(-2px);
+    border-color:#b8c9bb;
+    box-shadow:0 6px 14px rgba(53,80,60,.10);
+  }
+  .table-btn:active,
+  #mixedBtn:active,
+  .mode-btn:active { transform:translateY(1px); box-shadow:0 1px 0 rgba(53,80,60,.08); }
+
+  .table-btn.selected,#mixedBtn.selected,.mode-btn.selected {
+    background:var(--accent2);
+    border-color:var(--accent);
+    color:var(--accent);
+    box-shadow:inset 0 0 0 2px rgba(53,80,60,.07),0 4px 12px rgba(53,80,60,.12);
+  }
+
+  .goat-disabled {
+    opacity:.55;
+  }
+  .goat-disabled .table-btn,
+  .goat-disabled #mixedBtn,
+  #questionCount:disabled {
+    cursor:not-allowed;
+  }
+  .goat-disabled .table-btn:hover,
+  .goat-disabled #mixedBtn:hover {
+    transform:none;
+    border-color:#dbe3dc;
+    box-shadow:0 3px 0 rgba(53,80,60,.08);
+  }
+  select {
+    border-color:#dbe3dc;
+    background:#fbfcfa;
+    box-shadow:0 2px 0 rgba(53,80,60,.04);
+    transition:border-color .14s ease,box-shadow .14s ease;
+  }
+  select:focus { border-color:#8da392; box-shadow:0 0 0 4px rgba(53,80,60,.09); }
+
+  .primary {
+    background:var(--accent);
+    border-radius:13px;
+    box-shadow:0 5px 0 #263c2c,0 10px 20px rgba(53,80,60,.14);
+    transition:transform .14s ease,box-shadow .14s ease,filter .14s ease;
+  }
+  .primary:hover { filter:brightness(1.06); transform:translateY(-2px); box-shadow:0 7px 0 #263c2c,0 13px 24px rgba(53,80,60,.17); }
+  .primary:active { transform:translateY(3px); box-shadow:0 2px 0 #263c2c,0 5px 10px rgba(53,80,60,.12); }
+
+  .bar {
+    height:10px;
+    background:#e4e9e4;
+    box-shadow:inset 0 1px 2px rgba(23,35,28,.05);
+  }
+  .bar > div {
+    background:linear-gradient(90deg,#35503c 0%,#587a60 100%);
+    box-shadow:0 1px 4px rgba(53,80,60,.18);
+  }
+
+  .quiz-top { margin-bottom:10px; }
+  .progress { letter-spacing:.02em; }
+  .timer {
+    color:var(--accent);
+    text-shadow:0 1px 0 rgba(255,255,255,.7);
+  }
+
+  .question-card {
+    position:relative;
+    overflow:hidden;
+    box-shadow:var(--shadow-strong);
+  }
+  .question-card::before {
+    content:"×   ÷   =";
+    position:absolute;
+    top:-28px;
+    right:-4px;
+    font-size:88px;
+    line-height:1;
+    font-weight:950;
+    letter-spacing:.04em;
+    color:rgba(53,80,60,.035);
+    pointer-events:none;
+    transform:rotate(-8deg);
+  }
+  .question-card > * { position:relative; z-index:1; }
+
+  .level { color:#78827b; letter-spacing:.13em; }
+  .question {
+    font-family:"Arial Black",Inter,system-ui,sans-serif;
+    letter-spacing:-.045em;
+    color:#15221a;
+    text-shadow:0 2px 0 rgba(255,255,255,.8);
+  }
+
+  .choice {
+    background:#fbfcfa;
+    border:2px solid #dbe3dc;
+    border-radius:15px;
+    box-shadow:0 4px 0 rgba(53,80,60,.07);
+    transition:transform .14s ease,box-shadow .14s ease,border-color .14s ease,background .14s ease;
+  }
+  .choice:hover {
+    border-color:#9eb3a2;
+    transform:translateY(-3px);
+    box-shadow:0 8px 16px rgba(53,80,60,.10);
+  }
+  .choice:active { transform:translateY(2px) scale(.985); box-shadow:0 2px 0 rgba(53,80,60,.07); }
+  .choice.correct {
+    background:#eaf7ef;
+    border-color:#3c9b68;
+    color:#17643b;
+    box-shadow:0 5px 14px rgba(35,134,83,.13);
+  }
+  .choice.wrong {
+    background:#fff0ed;
+    border-color:#e0523f;
+    color:#a93629;
+    box-shadow:0 5px 14px rgba(224,82,63,.11);
+  }
+
+  .feedback { letter-spacing:-.005em; }
+  .feedback.good { color:#238653; }
+  .feedback.bad { color:#b25a16; }
+
+  .stat {
+    background:#fbfcfa;
+    border-color:#dfe6e0;
+    box-shadow:0 3px 10px rgba(23,35,28,.04);
+  }
+  .stat strong { font-family:"Arial Black",Inter,system-ui,sans-serif; letter-spacing:-.025em; }
+  .fact {
+    background:#fff8e7;
+    border-color:#f2d98b;
+    box-shadow:0 2px 7px rgba(244,201,93,.10);
+  }
+  .actions button {
+    background:#fbfcfa;
+    border-color:#dbe3dc;
+    box-shadow:0 3px 0 rgba(53,80,60,.07);
+    transition:transform .14s ease,box-shadow .14s ease,border-color .14s ease;
+  }
+  .actions button:hover { transform:translateY(-2px); border-color:#a9b9ad; box-shadow:0 7px 14px rgba(53,80,60,.09); }
+  .actions button:active { transform:translateY(1px); box-shadow:0 1px 0 rgba(53,80,60,.07); }
+
+  .regalia-footer { color:#778078; }
+  .regalia-footer strong { color:var(--text); }
+
+  /* Password/title screen — same gate and authentication, purely visual refinement. */
+  #passwordGate {
+    background:
+      radial-gradient(circle at 20% 20%,rgba(53,80,60,.12),transparent 30%),
+      radial-gradient(circle at 80% 75%,rgba(244,201,93,.10),transparent 28%),
+      linear-gradient(145deg,#f9f8f3,#edf1ec);
+  }
+  #passwordGate::before {
+    content:"×   7   12   ÷   3   =";
+    position:absolute;
+    inset:auto -20px 7% auto;
+    font-size:clamp(55px,12vw,130px);
+    font-weight:950;
+    letter-spacing:.05em;
+    color:rgba(53,80,60,.035);
+    transform:rotate(-7deg);
+    white-space:nowrap;
+    pointer-events:none;
+  }
+  .password-card {
+    position:relative;
+    z-index:1;
+    width:min(400px,100%);
+    padding:38px 30px 30px;
+    border:1px solid rgba(53,80,60,.10);
+    border-radius:22px;
+    background:rgba(255,255,255,.96);
+    box-shadow:0 22px 55px rgba(23,35,28,.14),0 4px 10px rgba(23,35,28,.05);
+  }
+  .password-card h2 {
+    font-family:"Arial Black",Inter,system-ui,sans-serif;
+    font-size:clamp(34px,9vw,48px);
+    line-height:.95;
+    letter-spacing:-.055em;
+    margin:0 0 12px;
+    color:var(--accent);
+  }
+  .password-card p { color:#68736c; font-size:14px; margin-bottom:8px; }
+  .students-only { color:#7a847d; letter-spacing:.08em; font-size:11px; text-transform:uppercase; margin:-1px 0 24px; }
+  #accessPassword {
+    padding:14px 15px;
+    border:1px solid #d7e0d9;
+    border-radius:12px;
+    background:#fbfcfa;
+    transition:border-color .14s ease,box-shadow .14s ease,background .14s ease;
+  }
+  #accessPassword:focus { border-color:#78927f; background:#fff; box-shadow:0 0 0 4px rgba(53,80,60,.09); }
+  #passwordSubmit {
+    margin-top:13px;
+    padding:14px 16px;
+    border-radius:12px;
+    background:var(--accent);
+    box-shadow:0 4px 0 #263c2c,0 9px 18px rgba(53,80,60,.14);
+    transition:transform .14s ease,box-shadow .14s ease,filter .14s ease;
+  }
+  #passwordSubmit:hover { filter:brightness(1.06); transform:translateY(-2px); box-shadow:0 6px 0 #263c2c,0 12px 22px rgba(53,80,60,.16); }
+  #passwordSubmit:active { transform:translateY(2px); box-shadow:0 2px 0 #263c2c,0 4px 9px rgba(53,80,60,.11); }
+
+  @media (prefers-reduced-motion:reduce) {
+    *,*::before,*::after { animation-duration:.01ms !important; animation-iteration-count:1 !important; transition-duration:.01ms !important; scroll-behavior:auto !important; }
+  }
+
+
+  /* Mobile portrait start-page compactness only. Gameplay and all scripts remain unchanged. */
+  @media (max-width:600px) and (orientation:portrait) {
+    .app { padding-top:10px; padding-bottom:14px; }
+    #setup .brand { font-size:11px; margin-bottom:5px; }
+    #setup h1 { font-size:27px; margin-bottom:4px; }
+    #setup .subtitle { font-size:12px; margin-bottom:11px; line-height:1.3; }
+    #setup .card { padding:11px; border-radius:17px; }
+    #setup .sound-row { margin-bottom:6px; }
+    #setup .sound-btn { min-height:36px; padding:6px 10px; font-size:12px; }
+    #setup .section { margin-bottom:11px; }
+    #setup label { margin-bottom:6px; font-size:14px; }
+    #setup .table-grid { grid-template-columns:repeat(4,minmax(0,1fr)); gap:6px; }
+    #setup .table-btn { min-height:42px; font-size:15px; border-radius:12px; }
+    #setup #mixedBtn { min-height:42px; margin-top:6px; border-radius:12px; }
+    #setup .controls { gap:8px; }
+    #setup .controls label { margin-bottom:5px; }
+    #setup select { padding:9px 10px; border-radius:11px; font-size:13px; }
+    #setup .note { font-size:11px; line-height:1.32; margin-top:6px; }
+    #setup .note[style] { margin-bottom:9px !important; }
+    #setup .primary { min-height:44px; padding:11px; font-size:15px; border-radius:12px; }
+    .regalia-footer { padding-top:12px; padding-bottom:2px; font-size:10px; line-height:1.4; }
+    .regalia-footer strong { font-size:11px; }
+  }
+
+  @media (max-width:600px) and (orientation:portrait) and (max-height:740px) {
+    .app { padding-top:7px; padding-bottom:10px; }
+    #setup .brand { margin-bottom:3px; }
+    #setup h1 { font-size:25px; margin-bottom:3px; }
+    #setup .subtitle { margin-bottom:8px; }
+    #setup .card { padding:9px; }
+    #setup .sound-row { margin-bottom:4px; }
+    #setup .section { margin-bottom:8px; }
+    #setup .table-grid { gap:5px; }
+    #setup .table-btn, #setup #mixedBtn { min-height:39px; }
+    #setup .controls { gap:6px; }
+    #setup .note { line-height:1.25; }
+    #setup .primary { min-height:41px; }
+    .regalia-footer { padding-top:8px; }
+  }
+
+</style>
+
+
+
+</head>
+<body>
+
+  <div id="passwordGate">
+    <div class="password-card">
+      <h2>MULTIPLY RUSH</h2>
+      <p>Pusat Tuisyen Regalia</p>
+      <div class="students-only">- Students Only -</div>
+      <form id="passwordForm">
+        <input id="accessPassword" type="password" autocomplete="current-password" placeholder="Password" aria-label="Password">
+        <button id="passwordSubmit" type="submit">Enter</button>
+        <div id="passwordError" aria-live="polite"></div>
+      </form>
+    </div>
+  </div>
+<script>
+(function(){
+  const AUTH_KEY="regaliaMathAuthenticated";
+  const gate=document.getElementById("passwordGate");
+  const form=document.getElementById("passwordForm");
+  const input=document.getElementById("accessPassword");
+  const error=document.getElementById("passwordError");
+
+  if(localStorage.getItem(AUTH_KEY)==="true"){
+    gate.classList.add("hidden");
+    return;
+  }
+
+  form.addEventListener("submit",function(e){
+    e.preventDefault();
+
+    if(input.value==="RGLMATH"){
+      localStorage.setItem(AUTH_KEY,"true");
+      gate.classList.add("hidden");
+      error.textContent="";
+    }else{
+      error.textContent="Incorrect password";
+      input.select();
+    }
+  });
+})();
+</script>
+
+
+
+  <div id="timeupOverlay" class="timeup-overlay hidden" aria-hidden="true">
+    <div id="timeupMessage" class="timeup-message">OH NO! TIME'S UP!</div>
+  </div>
+
+<canvas id="confettiCanvas"></canvas>
+<div class="app">
+  <section id="setup">
+    <div class="brand">REGALIA TUITION CENTER</div>
+    <h1>Multiplication Tables</h1>
+    <p class="subtitle">Tables 2–12 · Build speed. Build confidence. Master the facts.</p>
+    <div class="card">
+      <div class="sound-row">
+        <button id="soundBtn" type="button" class="sound-btn">🔊 Sound On</button>
+      </div>
+      <div class="section">
+        <label for="mode">Mode</label>
+        <select id="mode">
+          <option value="practice" selected>📘 Practice — Accuracy First</option>
+          <option value="speed">⚡ Speed — Per Question</option>
+          <option value="goat">🏆 G.O.A.T.</option>
+        </select>
+        <div class="note" id="modeDescription">No time pressure. Focus on getting the multiplication fact right.</div>
+      </div>
+
+      <div class="section">
+        <label for="difficulty">Difficulty Level</label>
+        <select id="difficulty">
+          <option value="easy">🟢 Easy</option>
+          <option value="medium" selected>🟡 Medium</option>
+          <option value="hard">🔴 Hard</option>
+        </select>
+      </div>
+
+      <div class="section">
+        <label>Choose Tables</label>
+        <div class="table-grid" id="tableGrid">
+          <button class="table-btn" type="button" data-table="2" onclick="selectTable(2)">2</button>
+          <button class="table-btn" type="button" data-table="3" onclick="selectTable(3)">3</button>
+          <button class="table-btn" type="button" data-table="4" onclick="selectTable(4)">4</button>
+          <button class="table-btn" type="button" data-table="5" onclick="selectTable(5)">5</button>
+          <button class="table-btn" type="button" data-table="6" onclick="selectTable(6)">6</button>
+          <button class="table-btn" type="button" data-table="7" onclick="selectTable(7)">7</button>
+          <button class="table-btn" type="button" data-table="8" onclick="selectTable(8)">8</button>
+          <button class="table-btn" type="button" data-table="9" onclick="selectTable(9)">9</button>
+          <button class="table-btn" type="button" data-table="10" onclick="selectTable(10)">10</button>
+          <button class="table-btn" type="button" data-table="11" onclick="selectTable(11)">11</button>
+          <button class="table-btn" type="button" data-table="12" onclick="selectTable(12)">12</button>
+        </div>
+        <button id="mixedBtn" type="button" onclick="selectMixed()">Mixed 2–12</button>
+        <div class="note" id="selectionText">Choose at least one table.</div>
+      </div>
+
+      <div class="section">
+        <label for="questionCount">Number of Questions</label>
+        <select id="questionCount">
+          <option value="10">10</option>
+          <option value="20" selected>20</option>
+          <option value="30">30</option>
+          <option value="50">50</option>
+        </select>
+      </div>
+
+      <div class="note" id="challengeInfo">
+        Practice: no timer. Easy, Medium and Hard control the question and distractor difficulty.
+      </div>
+
+      <div class="note" style="margin-bottom:16px">
+        Choose your mode and difficulty before starting. Practice has no timer. Speed uses a timer per question. G.O.A.T. uses one total timer for the whole session. Incorrect facts are saved for Retry Incorrect.
+      </div>
+      <button class="primary" id="startBtn">Start Test</button>
+    </div>
+  </section>
+
+  <section id="quiz" class="hidden">
+    <div class="quiz-top">
+      <div>
+        <div class="progress" id="progress"></div>
+        <div class="note" id="quizMode" style="margin-top:3px"></div>
+      </div>
+      <div class="timer hidden" id="timer"></div>
+    </div>
+    <div class="bar"><div id="progressBar"></div></div>
+    <div class="card question-card">
+      <div class="level" id="level"></div>
+      <div class="question" id="question"></div>
+      <div class="choices" id="choices"></div>
+      <div class="feedback" id="feedback" aria-live="assertive"></div>
+      <button class="primary next hidden" id="nextBtn">Next Question</button>
+    </div>
+  </section>
+
+  <section id="results" class="hidden">
+    <div class="card">
+      <div class="results-title">
+        <h2 id="resultHeading">Test Complete!</h2>
+        <p id="resultSub" class="subtitle"></p>
+      </div>
+      <div class="stats">
+        <div class="stat"><strong id="score"></strong><span>SCORE</span></div>
+        <div class="stat"><strong id="accuracy"></strong><span>ACCURACY</span></div>
+        <div class="stat"><strong id="correctCount"></strong><span>CORRECT</span></div>
+      </div>
+      <div class="missed">
+        <h3>Facts to practise</h3>
+        <p class="note">These are the facts that escaped you this round.</p>
+        <div class="facts" id="missedFacts"></div>
+      </div>
+      <div class="actions">
+        <button id="retryBtn">Retry Incorrect</button>
+        <button id="newBtn">New Test</button>
+      </div>
+    </div>
+  </section>
+  <footer class="regalia-footer">
+    <strong>For Regalia students only</strong>
+    <div>Pusat Tuisyen Regalia</div>
+    <div>WhatsApp : 010 7638957</div>
+  </footer>
+</div>
+
+<script>
+(() => {
+  const tableGrid = document.getElementById("tableGrid");
+  const mixedBtn = document.getElementById("mixedBtn");
+  const selectionText = document.getElementById("selectionText");
+  const startBtn = document.getElementById("startBtn");
+  const setup = document.getElementById("setup");
+  const quiz = document.getElementById("quiz");
+  const results = document.getElementById("results");
+  const questionEl = document.getElementById("question");
+  const choicesEl = document.getElementById("choices");
+  const feedbackEl = document.getElementById("feedback");
+  const nextBtn = document.getElementById("nextBtn");
+  const timerEl = document.getElementById("timer");
+  const timeupOverlay = document.getElementById("timeupOverlay");
+  const timeupMessage = document.getElementById("timeupMessage");
+  const progressEl = document.getElementById("progress");
+  const progressBar = document.getElementById("progressBar");
+  const levelEl = document.getElementById("level");
+  const missedFactsEl = document.getElementById("missedFacts");
+  const retryBtn = document.getElementById("retryBtn");
+  const canvas = document.getElementById("confettiCanvas");
+  const ctx = canvas.getContext("2d");
+
+  const modeEl = document.getElementById("mode");
+  const difficultyEl = document.getElementById("difficulty");
+  const modeDescription = document.getElementById("modeDescription");
+  const challengeInfo = document.getElementById("challengeInfo");
+  const tableSection = tableGrid.closest(".section");
+  const questionCountEl = document.getElementById("questionCount");
+  const questionCountSection = questionCountEl.closest(".section");
+
+  function updateModeDescription() {
+    const d = difficultyEl.value;
+    const goat = modeEl.value === "goat";
+
+    if (modeEl.value === "practice") {
+      modeDescription.textContent = "No time pressure. Focus on getting the multiplication fact right.";
+      challengeInfo.textContent = "Practice: no timer. Easy, Medium and Hard control the question and distractor difficulty.";
+    } else if (modeEl.value === "speed") {
+      const time = d === "easy" ? "5 seconds" : d === "medium" ? "4 seconds" : "3 seconds";
+      modeDescription.textContent = "Rapid recall. Each question has " + time + " to answer.";
+      challengeInfo.textContent = "Speed: " + time + " per question. The timer resets for every new question.";
+    } else {
+      const total = d === "easy" ? "5 minutes" : d === "medium" ? "3 minutes" : "2 minutes";
+      modeDescription.textContent = "Answer as many of 132 questions as possible before time runs out.";
+      challengeInfo.textContent = "G.O.A.T.: " + total + ". All 132 questions are shuffled with no repeats.";
+    }
+
+    tableSection.classList.toggle("goat-disabled", goat);
+    questionCountSection.classList.toggle("goat-disabled", goat);
+    document.querySelectorAll("#tableGrid .table-btn, #mixedBtn").forEach(function(btn) {
+      btn.disabled = goat;
+      btn.setAttribute("aria-disabled", String(goat));
+    });
+    questionCountEl.disabled = goat;
+    questionCountEl.setAttribute("aria-disabled", String(goat));
+  }
+
+  modeEl.addEventListener("change", updateModeDescription);
+  difficultyEl.addEventListener("change", updateModeDescription);
+  questionCountEl.addEventListener("change", updateModeDescription);
+
+  let selectedTables = new Set();
+  let mixed = false;
+  let questions = [];
+  let current = 0;
+  let score = 0;
+  let attempted = 0;
+  let missed = [];
+  let answered = false;
+  let timer = null;
+  let remaining = 0;
+
+  function formatCountdown(seconds) {
+    const safe = Math.max(0, seconds);
+    const minutes = Math.floor(safe / 60);
+    const secs = safe % 60;
+    return `${minutes}:${String(secs).padStart(2,"0")}`;
+  }
+  let particles = [];
+  let confettiFrame = null;
+
+  // Generated browser sounds — no external audio files required.
+  let soundEnabled = true;
+  let audioCtx = null;
+
+  function unlockAudio() {
+    if (!soundEnabled) return;
+    try {
+      const Ctx = window.AudioContext || window.webkitAudioContext;
+      if (!Ctx) return;
+      if (!audioCtx) audioCtx = new Ctx();
+      if (audioCtx.state === "suspended") audioCtx.resume();
+    } catch (e) {}
+  }
+
+  function playTone(freq, duration, type, volume, delay) {
+    if (!soundEnabled || !audioCtx) return;
+    try {
+      const now = audioCtx.currentTime + (delay || 0);
+      const osc = audioCtx.createOscillator();
+      const gain = audioCtx.createGain();
+      osc.type = type || "sine";
+      osc.frequency.setValueAtTime(freq, now);
+      gain.gain.setValueAtTime(0.0001, now);
+      gain.gain.exponentialRampToValueAtTime(volume || 0.05, now + 0.01);
+      gain.gain.exponentialRampToValueAtTime(0.0001, now + duration);
+      osc.connect(gain);
+      gain.connect(audioCtx.destination);
+      osc.start(now);
+      osc.stop(now + duration + 0.02);
+    } catch (e) {}
+  }
+
+  function playCorrectSound() {
+    unlockAudio();
+    playTone(660, 0.11, "sine", 0.11, 0);
+    playTone(880, 0.16, "sine", 0.09, 0.08);
+  }
+
+  function playWrongSound() {
+    unlockAudio();
+    // More alarming error sound: sharp warning tone followed by a low drop.
+    playTone(330, 0.10, "sawtooth", 0.14, 0);
+    playTone(180, 0.20, "sawtooth", 0.12, 0.09);
+    playTone(110, 0.24, "triangle", 0.10, 0.20);
+  }
+
+
+  // Direct native handlers: intentionally simple for iPhone/Safari.
+  window.selectTable = function(n) {
+    mixed = false;
+    mixedBtn.classList.remove("selected");
+    if (selectedTables.has(n)) selectedTables.delete(n);
+    else selectedTables.add(n);
+
+    document.querySelectorAll(".table-btn").forEach(function(b) {
+      b.classList.toggle("selected", selectedTables.has(Number(b.dataset.table)));
+    });
+    updateSelection();
+  };
+
+  window.selectMixed = function() {
+    mixed = !mixed;
+    selectedTables.clear();
+    document.querySelectorAll(".table-btn").forEach(function(b) {
+      b.classList.remove("selected");
+    });
+    mixedBtn.classList.toggle("selected", mixed);
+    updateSelection();
+  };
+
+  function updateSelection() {
+    if (mixed) selectionText.textContent = "Mixed 2–12 selected.";
+    else if (selectedTables.size) selectionText.textContent = "Selected: " + [...selectedTables].sort((a,b)=>a-b).join(", ");
+    else selectionText.textContent = "Choose at least one table.";
+  }
+
+  function randomInt(min,max) {
+    return Math.floor(Math.random()*(max-min+1))+min;
+  }
+
+  function shuffle(arr) {
+    return arr.sort(() => Math.random() - 0.5);
+  }
+
+  function generateQuestions(count, tables) {
+    const result = [];
+    const used = new Set();
+    const difficulty = document.getElementById("difficulty").value;
+    let attempts = 0;
+
+    // Difficulty now controls both the question selection and the distractors.
+    let minFactor = 2;
+    let maxFactor = 12;
+
+    if (difficulty === "easy") {
+      minFactor = 2; maxFactor = 6;
+    } else if (difficulty === "medium") {
+      minFactor = 2; maxFactor = 10;
+    } else {
+      minFactor = 2; maxFactor = 12;
+    }
+
+    while (result.length < count && attempts < 10000) {
+      attempts++;
+      const table = tables[randomInt(0, tables.length - 1)];
+      const factor = randomInt(minFactor, maxFactor);
+      const key = table + "x" + factor;
+      if (used.has(key) && used.size < tables.length * (maxFactor - minFactor + 1)) continue;
+      used.add(key);
+
+      result.push({
+        a: table,
+        b: factor,
+        answer: table * factor,
+        level: difficulty === "easy" ? "Friendly Choices" :
+               difficulty === "medium" ? "Close Choices" : "Tricky Choices"
+      });
+    }
+
+    while (result.length < count) {
+      const table = tables[randomInt(0, tables.length - 1)];
+      const factor = randomInt(minFactor, maxFactor);
+      result.push({
+        a: table,
+        b: factor,
+        answer: table * factor,
+        level: difficulty === "easy" ? "Friendly Choices" :
+               difficulty === "medium" ? "Close Choices" : "Tricky Choices"
+      });
+    }
+
+    return result;
+  }
+
+  function generateGoatQuestions() {
+    const difficulty = difficultyEl.value;
+    const level = difficulty === "easy" ? "Friendly Choices" :
+                  difficulty === "medium" ? "Close Choices" : "Tricky Choices";
+    const result = [];
+
+    for (let table = 2; table <= 12; table++) {
+      for (let factor = 1; factor <= 12; factor++) {
+        result.push({
+          a: table,
+          b: factor,
+          answer: table * factor,
+          level
+        });
+      }
+    }
+
+    return shuffle(result);
+  }
+
+  function uniquePositive(values, answer) {
+    const out = [];
+    for (const v of values) {
+      if (Number.isFinite(v) && v > 0 && v !== answer && !out.includes(v)) out.push(v);
+    }
+    return out;
+  }
+
+  function choicesFor(q) {
+    const difficulty = document.getElementById("difficulty").value;
+    const answer = q.answer;
+    let distractors = [];
+
+    if (difficulty === "easy") {
+      // Friendly: mostly clearly different, but still mathematically plausible.
+      distractors = uniquePositive([
+        q.a * Math.max(2, q.b - 1),
+        q.a * Math.min(12, q.b + 1),
+        answer + (q.a * 2),
+        answer - (q.a * 2),
+        randomInt(2, 12) * randomInt(2, 12)
+      ], answer);
+    } else if (difficulty === "medium") {
+      // Close choices: neighboring facts and near numerical answers.
+      distractors = uniquePositive([
+        q.a * Math.max(2, q.b - 1),
+        q.a * Math.min(12, q.b + 1),
+        answer - q.a,
+        answer + q.a,
+        answer - 1,
+        answer + 1,
+        randomInt(2, 12) * randomInt(2, 12)
+      ], answer);
+    } else {
+      // Tricky: reversed digits, neighboring facts, and common one-factor errors.
+      const reversed = Number(String(answer).split("").reverse().join(""));
+      const nearby = [
+        q.a * Math.max(2, q.b - 1),
+        q.a * Math.min(12, q.b + 1),
+        Math.max(1, (q.a - 1) * q.b),
+        Math.max(1, (q.a + 1) * q.b),
+        answer - 1,
+        answer + 1,
+        reversed
+      ];
+      distractors = uniquePositive(nearby, answer);
+    }
+
+    // Guarantee four choices without making the fallback dominant.
+    let safety = 0;
+    while (distractors.length < 3 && safety++ < 100) {
+      const candidate = randomInt(2, 12) * randomInt(2, 12);
+      if (candidate !== answer && !distractors.includes(candidate)) distractors.push(candidate);
+    }
+
+    return shuffle([answer, ...distractors.slice(0, 3)]);
+  }
+
+  function startTest(retryOnly=false) {
+    clearInterval(timer);
+    if (retryOnly) {
+      if (!missed.length) return;
+      questions = missed.map(q => ({...q, level:"Retry"}));
+    } else if (modeEl.value === "goat") {
+      questions = generateGoatQuestions();
+    } else {
+      const tables = mixed ? Array.from({length:11},(_,i)=>i+2) : [...selectedTables];
+      if (!tables.length) {
+        selectionText.textContent = "⚠ Please select at least one table.";
+        return;
+      }
+      questions = generateQuestions(Number(questionCountEl.value), tables);
+    }
+    current = 0;
+    score = 0;
+    attempted = 0;
+    missed = [];
+    setup.classList.add("hidden");
+    results.classList.add("hidden");
+    quiz.classList.remove("hidden");
+    showQuestion();
+  }
+
+  function showQuestion() {
+    answered = false;
+    if (modeEl.value !== "goat") clearInterval(timer);
+    const q = questions[current];
+    progressEl.textContent = "Question " + (current+1) + " of " + questions.length;
+    document.getElementById("quizMode").textContent =
+      (modeEl.value === "speed" ? "⚡ Speed" : modeEl.value === "goat" ? "🏆 G.O.A.T." : "📘 Practice") +
+      " · " + (difficultyEl.options[difficultyEl.selectedIndex].text);
+    progressBar.style.width = ((current / questions.length) * 100) + "%";
+    levelEl.textContent = q.level;
+    questionEl.textContent = q.a + " × " + q.b + " = ?";
+    feedbackEl.textContent = "";
+    feedbackEl.className = "feedback";
+    nextBtn.classList.add("hidden");
+    nextBtn.textContent = current === questions.length-1 ? "See Results" : "Next Question";
+    choicesEl.innerHTML = "";
+
+    choicesFor(q).forEach(value => {
+      const btn = document.createElement("button");
+      btn.className = "choice";
+      btn.type = "button";
+      btn.textContent = value;
+      btn.addEventListener("click", () => answerQuestion(value, btn, false));
+      choicesEl.appendChild(btn);
+    });
+
+    const seconds = modeEl.value === "speed"
+      ? (difficultyEl.value === "easy" ? 5 : difficultyEl.value === "medium" ? 4 : 3)
+      : 0;
+
+    if (seconds) {
+      remaining = seconds;
+      timerEl.classList.remove("hidden");
+      timerEl.classList.remove("warning");
+      timerEl.textContent = formatCountdown(remaining);
+      timer = setInterval(() => {
+        remaining--;
+        timerEl.textContent = formatCountdown(remaining);
+        if (remaining <= 1) timerEl.classList.add("warning");
+        if (remaining <= 0) {
+          clearInterval(timer);
+          timer = null;
+          answerQuestion(null, null, true);
+        }
+      },1000);
+
+    } else if (modeEl.value === "goat") {
+      timerEl.classList.remove("hidden");
+
+      if (current === 0 && !timer) {
+        remaining = difficultyEl.value === "easy" ? 300 : difficultyEl.value === "medium" ? 180 : 120;
+        timerEl.classList.remove("warning");
+        timerEl.textContent = formatCountdown(remaining);
+
+        timer = setInterval(() => {
+          remaining--;
+          timerEl.textContent = formatCountdown(remaining);
+          if (remaining <= 10) timerEl.classList.add("warning");
+          if (remaining <= 0) {
+            clearInterval(timer);
+            timer = null;
+            showTimeUpThenFinish();
+          }
+        },1000);
+      } else {
+        timerEl.textContent = formatCountdown(remaining);
+        if (remaining <= 10) timerEl.classList.add("warning");
+        else timerEl.classList.remove("warning");
+      }
+
+    } else {
+      timerEl.classList.add("hidden");
+    }
+  }
+
+  const correctMessages = [
+    "🎉 BOOM! Nailed it!",
+    "🔥 Smashed it!",
+    "⚡ Lightning brain!",
+    "🧠 That fact is locked in!",
+    "🚀 Straight to the answer!",
+    "🏆 Nice! Your tables are getting stronger!",
+    "💥 POW! Correct!",
+    "🎯 Bullseye!"
+  ];
+
+  const wrongMessages = [
+    "👀 Ooooh… that one escaped you!",
+    "🧠 Your brain almost had it!",
+    "😏 Nice try. Round 2?",
+    "🔥 That fact is coming back for revenge!",
+    "🎯 Missed this one — let's get it next time!",
+    "🕵️‍♂️ Sneaky question! Now you've got it.",
+    "💪 Not yet. That's exactly why we practise!",
+    "😈 This fact thinks it can beat you. Prove it wrong!"
+  ];
+
+  function answerQuestion(value, button, timedOut) {
+    if (answered) return;
+    answered = true;
+    attempted++;
+    if (modeEl.value !== "goat") clearInterval(timer);
+
+    const q = questions[current];
+    const correct = value === q.answer;
+
+    document.querySelectorAll(".choice").forEach(b => b.disabled = true);
+
+    if (correct) {
+      score++;
+      button.classList.add("correct");
+      feedbackEl.textContent = correctMessages[randomInt(0,correctMessages.length-1)];
+      feedbackEl.classList.add("good");
+      burstConfetti();
+      playCorrectSound();
+    } else {
+      if (button) button.classList.add("wrong");
+      playWrongSound();
+      document.querySelectorAll(".choice").forEach(b => {
+        if (Number(b.textContent) === q.answer) b.classList.add("correct");
+      });
+      missed.push(q);
+      feedbackEl.textContent = timedOut
+        ? "⏱ Time! " + wrongMessages[randomInt(0,wrongMessages.length-1)] + " The answer was " + q.answer + "."
+        : wrongMessages[randomInt(0,wrongMessages.length-1)] + " The answer was " + q.answer + ".";
+      feedbackEl.classList.add("bad");
+    }
+    nextBtn.classList.remove("hidden");
+  }
+
+  nextBtn.addEventListener("click", () => {
+    if (current === questions.length-1) finish();
+    else {
+      current++;
+      showQuestion();
+    }
+  });
+
+  
+  function showTimeUpThenFinish() {
+    timeupOverlay.classList.remove("hidden");
+    timeupOverlay.setAttribute("aria-hidden", "false");
+
+    let flashes = 0;
+
+    function flashOnce() {
+      timeupMessage.classList.remove("flash");
+      void timeupMessage.offsetWidth;
+      timeupMessage.classList.add("flash");
+      flashes++;
+
+      if (flashes < 3) {
+        setTimeout(flashOnce, 650);
+      } else {
+        setTimeout(() => {
+          timeupOverlay.classList.add("hidden");
+          timeupOverlay.setAttribute("aria-hidden", "true");
+          finish();
+        }, 700);
+      }
+    }
+
+    flashOnce();
+  }
+
+  function finish() {
+    clearInterval(timer);
+    quiz.classList.add("hidden");
+    results.classList.remove("hidden");
+    progressBar.style.width = "100%";
+
+    const accuracy = Math.round((score / (modeEl.value === "goat" ? Math.max(1, attempted) : questions.length)) * 100);
+    document.getElementById("score").textContent = score + "/" + questions.length;
+    document.getElementById("accuracy").textContent = accuracy + "%";
+    document.getElementById("correctCount").textContent = score;
+
+    let heading, sub;
+    if (accuracy === 100) {
+      heading = "🏆 PERFECT SCORE!";
+      sub = "Every fact got smashed. That's table mastery.";
+    } else if (accuracy >= 90) {
+      heading = "🔥 Excellent!";
+      sub = "You're getting seriously fast and accurate.";
+    } else if (accuracy >= 75) {
+      heading = "💪 Good progress!";
+      sub = "Now let's hunt down those remaining facts.";
+    } else {
+      heading = "🚀 Keep going!";
+      sub = "Every mistake gives your brain another chance to get stronger.";
+    }
+    document.getElementById("resultHeading").textContent = heading;
+    document.getElementById("resultSub").textContent =
+      (modeEl.value === "speed" ? "⚡ Speed · " : modeEl.value === "goat" ? "🏆 G.O.A.T. · " : "📘 Practice · ") + sub;
+
+    missedFactsEl.innerHTML = "";
+    if (!missed.length) {
+      const p = document.createElement("p");
+      p.textContent = "🎉 Nothing escaped you this round!";
+      p.style.fontWeight = "800";
+      missedFactsEl.appendChild(p);
+      retryBtn.disabled = true;
+      retryBtn.style.opacity = ".5";
+    } else {
+      const counts = {};
+      missed.forEach(q => {
+        const key = q.a + " × " + q.b;
+        counts[key] = (counts[key] || 0) + 1;
+      });
+      Object.entries(counts).forEach(([fact,count]) => {
+        const span = document.createElement("span");
+        span.className = "fact";
+        span.textContent = fact + (count > 1 ? " · " + count + "×" : "");
+        missedFactsEl.appendChild(span);
+      });
+      retryBtn.disabled = false;
+      retryBtn.style.opacity = "1";
+    }
+  }
+
+  retryBtn.addEventListener("click", () => startTest(true));
+  document.getElementById("newBtn").addEventListener("click", () => {
+    results.classList.add("hidden");
+    setup.classList.remove("hidden");
+  });
+
+  const soundBtn = document.getElementById("soundBtn");
+  soundBtn.addEventListener("click", function() {
+    soundEnabled = !soundEnabled;
+    soundBtn.classList.toggle("off", !soundEnabled);
+    soundBtn.textContent = soundEnabled ? "🔊 Sound On" : "🔇 Sound Off";
+    if (soundEnabled) unlockAudio();
+  });
+
+  updateModeDescription();
+  startBtn.addEventListener("click", () => { unlockAudio(); startTest(false); });
+
+  function resizeCanvas() {
+    canvas.width = window.innerWidth;
+    canvas.height = window.innerHeight;
+  }
+  window.addEventListener("resize", resizeCanvas);
+  resizeCanvas();
+
+  function burstConfetti() {
+    const cx = window.innerWidth / 2;
+    const cy = Math.min(window.innerHeight * .42, 420);
+    const count = 75;
+    for (let i=0; i<count; i++) {
+      particles.push({
+        x:cx + randomInt(-80,80), y:cy,
+        vx:(Math.random()-.5)*11,
+        vy:-Math.random()*9-4,
+        gravity:.25,
+        size:randomInt(5,10),
+        rotation:Math.random()*Math.PI,
+        vr:(Math.random()-.5)*.3,
+        life:70 + randomInt(0,30)
+      });
+    }
+    if (!confettiFrame) animateConfetti();
+  }
+
+  function animateConfetti() {
+    ctx.clearRect(0,0,canvas.width,canvas.height);
+    particles = particles.filter(p => p.life > 0);
+    particles.forEach(p => {
+      p.x += p.vx; p.y += p.vy; p.vy += p.gravity; p.rotation += p.vr; p.life--;
+      ctx.save();
+      ctx.translate(p.x,p.y);
+      ctx.rotate(p.rotation);
+      ctx.fillStyle = ["#4f46e5","#16a34a","#f59e0b","#dc2626","#0891b2","#db2777"][p.life % 6];
+      ctx.fillRect(-p.size/2,-p.size/2,p.size,p.size*.65);
+      ctx.restore();
+    });
+    if (particles.length) confettiFrame = requestAnimationFrame(animateConfetti);
+    else { confettiFrame=null; ctx.clearRect(0,0,canvas.width,canvas.height); }
+  }
+})();
+</script>
+</body>
+</html>
